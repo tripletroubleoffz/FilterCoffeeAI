@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Signal Feed - FilterCoffee AI
 
-## Getting Started
+## 1. Executive Summary
 
-First, run the development server:
+Personal Signal Feed is a product that delivers only what changed on topics a user cares about, along with why it matters.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+It is designed to generate immediate recurring revenue while laying the foundation for future B2B expansion.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The product solves one core problem:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**People don't lack information. They lack clarity, relevance, and confidence.**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Phase 1 focuses on email-first delivery, simple pricing, and strict cost control.
 
-## Learn More
+## 2. Product Vision 
 
-To learn more about Next.js, take a look at the following resources:
+### One-line value proposition
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A daily signal that tells you what actually changed — and why it matters to you.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### What this is
 
-## Deploy on Vercel
+* A personal intelligence feed
+* Calm, concise, non-addictive
+* Optimized for professionals, not news junkies
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### What this is NOT
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* A generic news aggregator
+* A social feed
+* A trading or advisory product
+
+## 3. Target Customer (ICP)
+
+### Primary ICP 
+* Tech professionals
+* Founders / indie hackers
+* Product managers
+* Startup / AI ecosystem followers
+
+### Characteristics
+
+* Reads too much news
+* Feels overwhelmed
+* Will pay for clarity and time savings
+* Comfortable with subscriptions
