@@ -1,0 +1,4 @@
+- [x] Create RLS enablement script in `src/scripts/enable-rls.ts`
+- [x] Execute the script to apply RLS on all 19 database tables
+- [x] Verify database queries still function correctly via browser subagent
+- [x] Create walkthrough summary of security changes

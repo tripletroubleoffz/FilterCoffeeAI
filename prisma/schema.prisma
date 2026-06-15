@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  role         String        @default("USER")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  supabaseId   String?       @unique
+  analytics    Analytics[]
+  auditLogs    AuditLog[]
+  bookmarks    Bookmark[]
+  digests      Digest[]
+  reports      Report[]
+  subscription Subscription?
+  topics       Topic[]
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  stripeCustomerId String?   @unique
+  stripePriceId    String?
+  status           String    @default("INACTIVE")
+  trialStart       DateTime?
+  trialEnd         DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  payments         Payment[]
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  amount         Int
+  currency       String
+  stripeChargeId String       @unique
+  status         String
+  createdAt      DateTime     @default(now())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model Topic {
+  id        String         @id @default(cuid())
+  userId    String
+  name      String
+  frequency String         @default("DAILY")
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  digests   DigestTopic[]
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keywords  TopicKeyword[]
+}
+
+model TopicKeyword {
+  id        String  @id @default(cuid())
+  topicId   String
+  keyword   String
+  isExclude Boolean @default(false)
+  topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+model Source {
+  id              String    @id @default(cuid())
+  name            String
+  url             String    @unique
+  type            String
+  format          String    @default("RSS")
+  category        String    @default("General")
+  pollingInterval Int       @default(60)
+  lastError       String?
+  healthStatus    String    @default("HEALTHY")
+  isActive        Boolean   @default(true)
+  lastFetched     DateTime?
+  createdAt       DateTime  @default(now())
+  signals         Signal[]
+}
+
+model Signal {
+  id          String         @id @default(cuid())
+  sourceId    String?
+  title       String
+  content     String
+  url         String?
+  publishedAt DateTime
+  category    String
+  score       Float          @default(0.0)
+  embeddingId String?
+  createdAt   DateTime       @default(now())
+  digests     DigestSignal[]
+  source      Source?        @relation(fields: [sourceId], references: [id])
+}
+
+model Digest {
+  id        String         @id @default(cuid())
+  userId    String
+  title     String
+  summary   String
+  frequency String         @default("DAILY")
+  createdAt DateTime       @default(now())
+  sentAt    DateTime?
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signals   DigestSignal[]
+  topics    DigestTopic[]
+}
+
+model DigestTopic {
+  digestId String
+  topicId  String
+  digest   Digest @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  topic    Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([digestId, topicId])
+}
+
+model DigestSignal {
+  digestId String
+  signalId String
+  digest   Digest @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  signal   Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@id([digestId, signalId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  url       String
+  notes     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String
+  range     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CareerTrend {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  value     String
+  change    Float
+  period    String
+  createdAt DateTime @default(now())
+}
+
+model FinanceTrend {
+  id        String   @id @default(cuid())
+  ticker    String?
+  name      String
+  value     Float
+  change    Float
+  details   String?
+  period    String
+  createdAt DateTime @default(now())
+}
+
+model AiTrend {
+  id          String   @id @default(cuid())
+  company     String
+  type        String
+  title       String
+  description String
+  importance  String
+  createdAt   DateTime @default(now())
+}
+
+model Analytics {
+  id         String   @id @default(cuid())
+  userId     String?
+  event      String
+  properties String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  details   String
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  email     String
+  subject   String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
