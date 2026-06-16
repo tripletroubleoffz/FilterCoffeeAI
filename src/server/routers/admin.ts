@@ -5,21 +5,29 @@ import { runAllIngestions, generateUserDigest } from '@/lib/worker';
 export const adminRouter = router({
   // Fetch system statistics and KPIs
   getMetrics: adminProcedure.query(async ({ ctx }) => {
-    const totalUsers = await ctx.db.user.count();
-    const activeSubscribers = await ctx.db.subscription.count({ where: { status: 'ACTIVE' } });
-    const totalTopics = await ctx.db.topic.count();
-    const totalSignals = await ctx.db.signal.count();
-    const totalEmails = await ctx.db.emailLog.count();
-    
+    const [
+      totalUsers,
+      activeSubscribers,
+      totalTopics,
+      totalSignals,
+      totalEmails,
+      auditLogsCount,
+      signalsByCategory
+    ] = await Promise.all([
+      ctx.db.user.count(),
+      ctx.db.subscription.count({ where: { status: 'ACTIVE' } }),
+      ctx.db.topic.count(),
+      ctx.db.signal.count(),
+      ctx.db.emailLog.count(),
+      ctx.db.auditLog.count(),
+      ctx.db.signal.groupBy({
+        by: ['category'],
+        _count: { id: true },
+      })
+    ]);
+
     // Simulate cost metrics based on token calculations
-    const auditLogsCount = await ctx.db.auditLog.count();
     const estimatedCostCents = totalSignals * 0.05 + totalEmails * 0.1; // estimate: 0.05c per signal vector embedding/parsing, 0.1c per email
-    
-    // Group signals by category
-    const signalsByCategory = await ctx.db.signal.groupBy({
-      by: ['category'],
-      _count: { id: true },
-    });
 
     const categoryStats = {
       AI: 0,

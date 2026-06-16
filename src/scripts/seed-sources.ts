@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role, UserStatus } from '@prisma/client';
 
 const db = new PrismaClient();
 
@@ -105,6 +105,90 @@ async function main() {
   }
 
   console.log(`Seeding complete. Added: ${addedCount}, Updated: ${updatedCount}`);
+
+  // Seed Admin Account
+  console.log('Seeding Admin and Test accounts...');
+  const adminUser = await db.user.upsert({
+    where: { email: 'founder@filtercoffee.ai' },
+    update: {
+      role: Role.ADMIN,
+      status: UserStatus.ACTIVE,
+    },
+    create: {
+      email: 'founder@filtercoffee.ai',
+      name: 'Founder Admin',
+      role: Role.ADMIN,
+      status: UserStatus.ACTIVE,
+      authProvider: 'MOCK',
+      authId: 'mock_founder_admin',
+    },
+  });
+
+  await db.subscription.upsert({
+    where: { userId: adminUser.id },
+    update: {
+      plan: 'POWER',
+      status: 'ACTIVE',
+    },
+    create: {
+      userId: adminUser.id,
+      plan: 'POWER',
+      status: 'ACTIVE',
+      stripeCustomerId: 'cus_admin_stripe',
+      stripePriceId: 'price_power_monthly',
+    },
+  });
+
+  const adminLedger = await db.creditLedger.upsert({
+    where: { userId: adminUser.id },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      currentBalance: 10000,
+      purchasedCredits: 10000,
+    },
+  });
+
+  // Seed Test User
+  const testUser = await db.user.upsert({
+    where: { email: 'test@filtercoffee.ai' },
+    update: {
+      role: Role.USER,
+      status: UserStatus.ACTIVE,
+    },
+    create: {
+      email: 'test@filtercoffee.ai',
+      name: 'Test Coffee User',
+      role: Role.USER,
+      status: UserStatus.ACTIVE,
+      authProvider: 'MOCK',
+      authId: 'mock_test_user',
+    },
+  });
+
+  await db.subscription.upsert({
+    where: { userId: testUser.id },
+    update: {},
+    create: {
+      userId: testUser.id,
+      plan: 'PRO',
+      status: 'ACTIVE',
+      stripeCustomerId: 'cus_test_stripe',
+      stripePriceId: 'price_pro_monthly',
+    },
+  });
+
+  await db.creditLedger.upsert({
+    where: { userId: testUser.id },
+    update: {},
+    create: {
+      userId: testUser.id,
+      currentBalance: 1000,
+      purchasedCredits: 1000,
+    },
+  });
+
+  console.log('Admin and Test accounts seeded successfully.');
 }
 
 main()

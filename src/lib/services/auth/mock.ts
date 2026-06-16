@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { IAuthService } from './interface';
 import { db } from '../../db';
+import { Role } from '@prisma/client';
 
 export class MockAuthService implements IAuthService {
   async getSessionUser(req?: Request): Promise<any | null> {
@@ -28,8 +29,9 @@ export class MockAuthService implements IAuthService {
         data: {
           email,
           name: email === 'founder@filtercoffee.ai' ? 'Founder' : 'Test User',
-          supabaseId: `mock_${Math.random().toString(36).substring(2, 11)}`,
-          role: email === 'founder@filtercoffee.ai' ? 'ADMIN' : 'USER',
+          authId: `mock_${Math.random().toString(36).substring(2, 11)}`,
+          authProvider: 'MOCK',
+          role: email === 'founder@filtercoffee.ai' ? Role.ADMIN : Role.USER,
         },
         include: { subscription: true },
       });

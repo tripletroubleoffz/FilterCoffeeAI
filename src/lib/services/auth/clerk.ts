@@ -1,6 +1,7 @@
 import { IAuthService } from './interface';
 import { db } from '../../db';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { Role } from '@prisma/client';
 
 export class ClerkAuthService implements IAuthService {
   async getSessionUser(req?: Request): Promise<any | null> {
@@ -9,7 +10,7 @@ export class ClerkAuthService implements IAuthService {
       if (!userId) return null;
 
       let user = await db.user.findFirst({
-        where: { supabaseId: userId },
+        where: { authId: userId },
         include: { subscription: true },
       });
 
@@ -20,10 +21,11 @@ export class ClerkAuthService implements IAuthService {
         const email = clerkUser.emailAddresses[0]?.emailAddress;
         user = await db.user.create({
           data: {
-            supabaseId: userId,
+            authId: userId,
+            authProvider: 'CLERK',
             email,
             name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Professional',
-            role: email === 'founder@filtercoffee.ai' ? 'ADMIN' : 'USER',
+            role: email === 'founder@filtercoffee.ai' ? Role.ADMIN : Role.USER,
           },
           include: { subscription: true },
         });
@@ -64,3 +66,4 @@ export class ClerkAuthService implements IAuthService {
     return { success: true };
   }
 }
+

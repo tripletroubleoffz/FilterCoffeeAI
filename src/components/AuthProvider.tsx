@@ -34,6 +34,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mock') {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return decodeURIComponent(parts.pop()!.split(';').shift()!);
+        return null;
+      };
+
+      const email = getCookie('fc_session');
+      if (email) {
+        const dummyUser: any = {
+          id: 'mock-user-id',
+          email,
+          user_metadata: { name: email.split('@')[0] },
+          app_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+        };
+        const dummySession: any = {
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          token_type: 'bearer',
+          user: dummyUser,
+        };
+        setSession(dummySession);
+        setUser(dummyUser);
+      } else {
+        setSession(null);
+        setUser(null);
+      }
+      setLoading(false);
+      return;
+    }
+
     // 1. Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -57,6 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setLoading(true);
+    if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mock') {
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const secureFlag = isSecure ? '; Secure' : '';
+      document.cookie = `fc_session=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);

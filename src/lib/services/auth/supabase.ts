@@ -1,6 +1,7 @@
 import { IAuthService } from './interface';
 import { db } from '../../db';
 import { supabaseAdmin } from '../../supabaseAdmin';
+import { Role } from '@prisma/client';
 
 export class SupabaseAuthService implements IAuthService {
   /**
@@ -87,7 +88,7 @@ export class SupabaseAuthService implements IAuthService {
 
       // Fetch the user from the database
       const dbUser = await db.user.findUnique({
-        where: { supabaseId: user.id },
+        where: { authId: user.id },
         include: { subscription: true },
       });
 
@@ -110,17 +111,18 @@ export class SupabaseAuthService implements IAuthService {
   async upsertSupabaseUser(supabaseUserId: string, email: string, name?: string): Promise<any> {
     try {
       let user = await db.user.findUnique({
-        where: { supabaseId: supabaseUserId },
+        where: { authId: supabaseUserId },
         include: { subscription: true },
       });
 
       if (!user) {
         user = await db.user.create({
           data: {
-            supabaseId: supabaseUserId,
+            authId: supabaseUserId,
+            authProvider: 'SUPABASE',
             email,
             name: name || email.split('@')[0],
-            role: email === 'founder@filtercoffee.ai' ? 'ADMIN' : 'USER',
+            role: email === 'founder@filtercoffee.ai' ? Role.ADMIN : Role.USER,
           },
           include: { subscription: true },
         });

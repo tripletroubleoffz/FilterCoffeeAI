@@ -8,36 +8,71 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String?
-  role         String        @default("USER")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  supabaseId   String?       @unique
-  analytics    Analytics[]
-  auditLogs    AuditLog[]
-  bookmarks    Bookmark[]
-  digests      Digest[]
-  reports      Report[]
-  subscription Subscription?
-  topics       Topic[]
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  role            Role             @default(USER)
+  status          UserStatus       @default(ACTIVE)
+  authProvider    String           @default("SUPABASE")
+  authId          String           @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  analytics       Analytics[]
+  auditLogs       AuditLog[]
+  bookmarks       Bookmark[]
+  digests         Digest[]
+  reports         Report[]
+  subscription    Subscription?
+  topics          Topic[]
+  creditLedger    CreditLedger?
+  aiGenerations   AiGeneration[]
+  usageLogs       UsageLog[]
+  feedbacks       Feedback[]
+  contactMessages ContactMessage[]
+  billingEvents   BillingEvent[]
+  purchaseIntents PurchaseIntent[]
+
+  @@index([email])
+  @@index([authId])
+  @@index([createdAt])
 }
 
 model Subscription {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  stripeCustomerId String?   @unique
-  stripePriceId    String?
-  status           String    @default("INACTIVE")
-  trialStart       DateTime?
-  trialEnd         DateTime?
-  currentPeriodEnd DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  payments         Payment[]
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String          @id @default(cuid())
+  userId               String          @unique
+  plan                 String          @default("FREE")
+  billingCycle         String          @default("MONTHLY")
+  stripeCustomerId     String?         @unique
+  stripeSubscriptionId String?         @unique
+  stripePriceId        String?
+  status               String          @default("INACTIVE")
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  currentPeriodEnd     DateTime?
+  renewalDate          DateTime?
+  cancellationDate     DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  deletedAt            DateTime?
+  payments             Payment[]
+  billingEvents        BillingEvent[]
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model Payment {
@@ -49,6 +84,118 @@ model Payment {
   status         String
   createdAt      DateTime     @default(now())
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+}
+
+model CreditLedger {
+  id               String              @id @default(cuid())
+  userId           String              @unique
+  currentBalance   Int                 @default(0)
+  usedCredits      Int                 @default(0)
+  purchasedCredits Int                 @default(0)
+  bonusCredits     Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     CreditTransaction[]
+
+  @@index([userId])
+}
+
+model CreditTransaction {
+  id            String       @id @default(cuid())
+  ledgerId      String
+  amount        Int
+  balanceBefore Int          @default(0)
+  balanceAfter  Int          @default(0)
+  type          String       // GRANT, PURCHASE, RESERVE, DEDUCT, REFUND, SUBSCRIPTION, BONUS
+  referenceId   String?
+  description   String?
+  createdAt     DateTime     @default(now())
+  ledger        CreditLedger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+
+  @@index([ledgerId])
+  @@index([createdAt])
+}
+
+model AiGeneration {
+  id               String    @id @default(cuid())
+  userId           String
+  prompt           String
+  response         String
+  modelUsed        String
+  tokenCount       Int       @default(0)
+  generationType   String    @default("TEXT")
+  status           String    @default("SUCCESS")
+  errorLogs        String?
+  provider         String    @default("GEMINI")
+  promptTokens     Int       @default(0)
+  completionTokens Int       @default(0)
+  totalTokens      Int       @default(0)
+  providerCost     Float     @default(0.0)
+  creditsConsumed  Int       @default(0)
+  executionTime    Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UsageLog {
+  id            String    @id @default(cuid())
+  userId        String
+  action        String
+  creditsUsed   Int       @default(0)
+  tokensUsed    Int       @default(0)
+  executionTime Int       @default(0)
+  status        String
+  resourceType  String?
+  quantity      Int       @default(1)
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Feedback {
+  id        String    @id @default(cuid())
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model BillingEvent {
+  id             String        @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  eventType      String
+  amount         Int?
+  currency       String?
+  stripeId       String?       @unique
+  details        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([createdAt])
 }
 
 model Topic {
@@ -59,9 +206,13 @@ model Topic {
   isActive  Boolean        @default(true)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
   digests   DigestTopic[]
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   keywords  TopicKeyword[]
+
+  @@index([userId])
+  @@index([isActive])
 }
 
 model TopicKeyword {
@@ -70,6 +221,8 @@ model TopicKeyword {
   keyword   String
   isExclude Boolean @default(false)
   topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
 }
 
 model Source {
@@ -85,7 +238,11 @@ model Source {
   isActive        Boolean   @default(true)
   lastFetched     DateTime?
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   signals         Signal[]
+
+  @@index([url])
+  @@index([isActive])
 }
 
 model Signal {
@@ -100,7 +257,11 @@ model Signal {
   embeddingId String?
   createdAt   DateTime       @default(now())
   digests     DigestSignal[]
-  source      Source?        @relation(fields: [sourceId], references: [id])
+  source      Source?        @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([sourceId])
+  @@index([publishedAt])
+  @@index([category])
 }
 
 model Digest {
@@ -114,6 +275,9 @@ model Digest {
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   signals   DigestSignal[]
   topics    DigestTopic[]
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model DigestTopic {
@@ -142,6 +306,8 @@ model Bookmark {
   notes     String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Report {
@@ -152,6 +318,8 @@ model Report {
   range     String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model CareerTrend {
@@ -162,6 +330,8 @@ model CareerTrend {
   change    Float
   period    String
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model FinanceTrend {
@@ -173,6 +343,8 @@ model FinanceTrend {
   details   String?
   period    String
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model AiTrend {
@@ -183,6 +355,8 @@ model AiTrend {
   description String
   importance  String
   createdAt   DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Analytics {
@@ -191,17 +365,28 @@ model Analytics {
   event      String
   properties String?
   createdAt  DateTime @default(now())
-  user       User?    @relation(fields: [userId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  action    String
-  details   String
-  ipAddress String?
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  details     String
+  ipAddress   String?
+  actor       String?
+  entity      String?
+  entityId    String?
+  beforeState Json?
+  afterState  Json?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model EmailLog {
@@ -211,15 +396,60 @@ model EmailLog {
   status    String
   error     String?
   createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
+  userId    String?
   name      String
   email     String
   subject   String?
   message   String
-  status    String   @default("OPEN")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    String    @default("OPEN")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
 }
+
+enum PurchaseIntentStatus {
+  PENDING
+  REVIEWED
+  CONTACTED
+  APPROVED
+  REJECTED
+}
+
+model PurchaseIntent {
+  id               String               @id @default(cuid())
+  userId           String?
+  email            String
+  currentPlan      String
+  requestedPlan    String?
+  requestedCredits Int?
+  intentType       String
+  billingFrequency String?
+  sourcePage       String?
+  userAgent        String?
+  deviceType       String?
+  country          String?
+  referrer         String?
+  status           PurchaseIntentStatus @default(PENDING)
+  notes            String?
+  metadata         Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
+}
+

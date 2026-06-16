@@ -33,11 +33,24 @@ export default function AdminConsolePage() {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<'operations' | 'contacts' | 'logs'>('operations');
 
+  // Verify Admin role
+  const { data: profile, isLoading: loadingProfile } = trpc.user.getProfile.useQuery();
+  const isAdmin = !loadingProfile && profile?.role === 'ADMIN';
+
   // Operational queries
-  const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = trpc.admin.getMetrics.useQuery();
-  const { data: sources, isLoading: loadingSources, refetch: refetchSources } = trpc.admin.getSources.useQuery();
-  const { data: auditLogs, isLoading: loadingAudits, refetch: refetchAudits } = trpc.admin.getAuditLogs.useQuery();
-  const { data: emailLogs, isLoading: loadingEmails, refetch: refetchEmails } = trpc.admin.getEmailLogs.useQuery();
+  const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = trpc.admin.getMetrics.useQuery(undefined, {
+    enabled: isAdmin
+  });
+  const { data: sources, isLoading: loadingSources, refetch: refetchSources } = trpc.admin.getSources.useQuery(undefined, {
+    enabled: isAdmin
+  });
+  const { data: auditLogsData, isLoading: loadingAudits, refetch: refetchAudits } = (trpc.admin.getAuditLogs as any).useQuery(undefined, {
+    enabled: isAdmin
+  });
+  const auditLogs = auditLogsData as any;
+  const { data: emailLogs, isLoading: loadingEmails, refetch: refetchEmails } = trpc.admin.getEmailLogs.useQuery(undefined, {
+    enabled: isAdmin
+  });
 
   // Contact queries
   const [contactSearch, setContactSearch] = useState('');
@@ -46,7 +59,7 @@ export default function AdminConsolePage() {
 
   const { data: contactMessages, isLoading: loadingContacts, refetch: refetchContacts } = trpc.contact.getMessages.useQuery(
     { search: contactSearch, status: contactStatusFilter },
-    { enabled: activeTab === 'contacts' }
+    { enabled: isAdmin && activeTab === 'contacts' }
   );
 
   // Form states for new source
@@ -196,7 +209,28 @@ export default function AdminConsolePage() {
     }
   };
 
-  const loading = loadingMetrics || loadingSources || loadingAudits || loadingEmails;
+  const loading = loadingProfile || (isAdmin && (loadingMetrics || loadingSources || loadingAudits || loadingEmails));
+
+  if (loadingProfile) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 text-coffee-accent animate-spin" />
+        <p className="text-xs text-coffee-text-muted mt-2">Verifying administrator credentials...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-24 text-center space-y-4">
+        <ShieldAlert className="w-16 h-16 text-red-500 animate-bounce" />
+        <h2 className="text-xl font-display font-extrabold text-red-200">Access Denied</h2>
+        <p className="text-xs text-coffee-text-muted max-w-md">
+          You do not have administrative privileges to access the operational dashboard. This event has been logged.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-full flex flex-col pb-16">
@@ -704,7 +738,7 @@ export default function AdminConsolePage() {
                   <Database className="w-4 h-4" /> Security Audit Logs (Recent 50)
                 </h3>
                 <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-                  {auditLogs?.map((log) => (
+                  {auditLogs?.map((log: any) => (
                     <div key={log.id} className="p-3 bg-[#080504] border border-coffee-border/30 rounded text-[10px] space-y-1">
                       <div className="flex justify-between font-mono text-coffee-text-muted text-[9px]">
                         <span>{log.user?.email || 'SYSTEM'} // {log.action}</span>

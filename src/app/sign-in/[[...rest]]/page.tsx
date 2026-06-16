@@ -27,6 +27,15 @@ export default function SignInPage() {
     setError(null);
 
     startTransition(async () => {
+      if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mock') {
+        const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+        const secureFlag = isSecure ? '; Secure' : '';
+        document.cookie = `fc_session=${encodeURIComponent(email)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secureFlag}`;
+        router.push('/dashboard');
+        router.refresh();
+        return;
+      }
+
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,

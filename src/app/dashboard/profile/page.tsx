@@ -57,14 +57,15 @@ export default function ProfilePage() {
   const [page, setPage] = useState(1);
   const limit = 5;
 
-  const { data: logData, isLoading: isLogsLoading, refetch: refetchLogs } = trpc.user.getAuditLogs.useQuery({
+  const { data: logDataRaw, isLoading: isLogsLoading, refetch: refetchLogs } = (trpc.user.getAuditLogs as any).useQuery({
     search: search || undefined,
     filter: filter !== 'ALL' ? filter : undefined,
     page,
     limit
   }, {
-    placeholderData: (prev) => prev
+    placeholderData: (prev: any) => prev
   });
+  const logData = logDataRaw as any;
 
   // State for Danger Zone Account Deletion
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -545,7 +546,7 @@ export default function ProfilePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-coffee-border/10 text-[11px]">
-                  {logData.logs.map((log) => (
+                  {logData.logs.map((log: any) => (
                     <tr key={log.id} className="text-coffee-text-muted hover:text-coffee-cream">
                       <td className="py-3 font-mono text-coffee-text-muted shrink-0 w-44">
                         {new Date(log.createdAt).toLocaleString('en-US', {

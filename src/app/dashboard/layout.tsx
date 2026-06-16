@@ -206,6 +206,20 @@ export default function DashboardLayout({
                     </div>
                     {pathname === '/dashboard/admin' && <ChevronRight className="w-3 h-3" />}
                   </Link>
+                  <Link
+                    href="/dashboard/admin/purchase-attempts"
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-[11px] font-semibold tracking-wide transition-all ${
+                      pathname === '/dashboard/admin/purchase-attempts'
+                        ? 'bg-red-950/40 text-red-200 border border-red-800/40'
+                        : 'text-coffee-text-muted hover:bg-coffee-border/20 hover:text-red-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CreditCard className="w-4 h-4 shrink-0" />
+                      <span>Purchase Intents</span>
+                    </div>
+                    {pathname === '/dashboard/admin/purchase-attempts' && <ChevronRight className="w-3 h-3" />}
+                  </Link>
                 </div>
               </>
             )}

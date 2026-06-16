@@ -1,16 +1,16 @@
 import { IAIService } from './interface';
-import { GeminiService } from './gemini';
 import { MockAiService } from './mock';
+import { ProviderFallbackChain } from '@/server/services/ai/ProviderFallbackChain';
 
 let instance: IAIService | null = null;
 
 const aiService = new Proxy({} as IAIService, {
   get(target, prop) {
     if (!instance) {
-      if (process.env.AI_PROVIDER === 'mock' || !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-gemini-key') {
+      if (process.env.AI_PROVIDER === 'mock') {
         instance = new MockAiService();
       } else {
-        instance = new GeminiService();
+        instance = new ProviderFallbackChain();
       }
     }
     const val = (instance as any)[prop];
@@ -20,4 +20,5 @@ const aiService = new Proxy({} as IAIService, {
 
 export { aiService };
 export type { IAIService };
+
 

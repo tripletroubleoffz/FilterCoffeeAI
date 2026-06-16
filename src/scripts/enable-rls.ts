@@ -21,7 +21,13 @@ const tables = [
   'AuditLog',
   'EmailLog',
   'ContactMessage',
-  'Topic'
+  'Topic',
+  'CreditLedger',
+  'CreditTransaction',
+  'AiGeneration',
+  'UsageLog',
+  'Feedback',
+  'BillingEvent'
 ];
 
 async function main() {

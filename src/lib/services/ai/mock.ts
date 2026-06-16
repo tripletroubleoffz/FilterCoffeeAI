@@ -1,6 +1,27 @@
 import { IAIService } from './interface';
 
 export class MockAiService implements IAIService {
+  async generateContent(prompt: string, options?: any): Promise<string> {
+    return `[Mock AI Content] Generated content for: ${prompt}`;
+  }
+
+  async summarizeContent(text: string, options?: any): Promise<string> {
+    return `[Mock AI Summary] Executive summary of: ${text.slice(0, 100)}...`;
+  }
+
+  async analyzeContent(text: string, options?: any): Promise<string> {
+    return `[Mock AI Analysis] In-depth analysis of developments in: ${text.slice(0, 100)}...`;
+  }
+
+  async createRoast(topic: string, options?: any): Promise<string> {
+    return `[Mock AI Roast] Highly critical analysis of ${topic} and market viability.`;
+  }
+
+  async createBrew(signals: string | string[], options?: any): Promise<string> {
+    const signalCount = Array.isArray(signals) ? signals.length : 1;
+    return `[Mock AI Brew] Compiled daily intelligence feed from ${signalCount} signals.`;
+  }
+
   async generateText(options: { systemPrompt?: string; prompt: string; temperature?: number }): Promise<string> {
     return `### What Changed
 - **FilterCoffee AI Local Simulation Activated**: All service dependencies (AI, Vector DB, Payments, Caching, and Mail) have been successfully redirected to offline mock handlers.
@@ -15,14 +36,12 @@ export class MockAiService implements IAIService {
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
-    // Generate deterministic 1536-dimensional mock embedding based on character counts/hash of text
     const embedding = new Array(1536).fill(0);
     const lowercase = text.toLowerCase();
     for (let i = 0; i < lowercase.length; i++) {
       const code = lowercase.charCodeAt(i);
       embedding[code % 1536] += 1;
     }
-    // L2 normalize
     let sumSq = 0;
     for (let i = 0; i < 1536; i++) {
       sumSq += embedding[i] * embedding[i];
