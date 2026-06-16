@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { runAllIngestions } from '@/lib/worker';
+import { IngestionScheduler } from '@/server/services/ingestion/IngestionScheduler';
 
 // Force dynamic evaluation to prevent Next.js from aggressively caching the cron route
 export const dynamic = 'force-dynamic';
@@ -14,16 +14,41 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Parse the schedule interval parameter
+  const { searchParams } = new URL(request.url);
+  const schedule = searchParams.get('schedule') || 'daily';
+
   try {
-    console.log('[Cron] Triggering automatic feed ingestion via Vercel Cron');
-    // Using a promise without awaiting so we don't block the cron response
-    // Vercel serverless functions might terminate background promises early
-    // So if using Vercel, it is better to await it if under maxDuration.
-    // Assuming maxDuration is 60s for Pro accounts or 10s for Hobby.
-    await runAllIngestions();
-    return NextResponse.json({ success: true, message: 'Ingestion completed successfully' });
+    console.log(`[Cron] Triggering automatic feed ingestion for schedule: ${schedule}`);
+    
+    switch (schedule) {
+      case '15min':
+        await IngestionScheduler.run15MinJobs();
+        break;
+      case '30min':
+        await IngestionScheduler.run30MinJobs();
+        break;
+      case 'hourly':
+        await IngestionScheduler.runHourlyJobs();
+        break;
+      case 'daily':
+        await IngestionScheduler.runDailyJobs();
+        break;
+      case 'weekly':
+        await IngestionScheduler.runWeeklyJobs();
+        break;
+      case 'monthly':
+        await IngestionScheduler.runMonthlyJobs();
+        break;
+      default:
+        console.warn(`[Cron] Unknown schedule interval "${schedule}". Defaulting to daily.`);
+        await IngestionScheduler.runDailyJobs();
+        break;
+    }
+
+    return NextResponse.json({ success: true, message: `Ingestion for schedule [${schedule}] completed successfully` });
   } catch (error: any) {
-    console.error('[Cron] Feed ingestion failed:', error);
+    console.error(`[Cron] Ingestion for schedule [${schedule}] failed:`, error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

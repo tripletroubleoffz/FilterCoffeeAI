@@ -32,7 +32,9 @@ export class SupabaseAuthService implements IAuthService {
           if (eqIdx !== -1) {
             const name = trimmed.substring(0, eqIdx);
             const val = trimmed.substring(eqIdx + 1);
-            if (name.startsWith('sb-') && (name.endsWith('-auth-token') || name.endsWith('-auth-token.0'))) {
+            const isSbAuthCookie = (name.startsWith('sb-') || name.startsWith('__Secure-sb-')) && 
+                                   (name.endsWith('-auth-token') || name.endsWith('-auth-token.0') || name.endsWith('-auth-token.1'));
+            if (isSbAuthCookie) {
               rawValue = val;
               break;
             }
@@ -62,7 +64,10 @@ export class SupabaseAuthService implements IAuthService {
           const { cookies } = await import('next/headers');
           const cookieStore = await cookies();
           const cookieList = cookieStore.getAll();
-          const sbCookie = cookieList.find(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'));
+          const sbCookie = cookieList.find(c => 
+            (c.name.startsWith('sb-') || c.name.startsWith('__Secure-sb-')) && 
+            (c.name.endsWith('-auth-token') || c.name.endsWith('-auth-token.0') || c.name.endsWith('-auth-token.1'))
+          );
           if (sbCookie?.value) {
             const parsed = JSON.parse(sbCookie.value);
             if (Array.isArray(parsed) && parsed[0]) {

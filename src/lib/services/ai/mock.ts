@@ -23,6 +23,69 @@ export class MockAiService implements IAIService {
   }
 
   async generateText(options: { systemPrompt?: string; prompt: string; temperature?: number }): Promise<string> {
+    const isJson = 
+      options.prompt.toLowerCase().includes('json') || 
+      options.systemPrompt?.toLowerCase().includes('json') || 
+      options.prompt.toLowerCase().includes('strictly a json object') || 
+      options.systemPrompt?.toLowerCase().includes('strictly as a json');
+
+    if (isJson) {
+      // 1. AI Radar query detection
+      if (
+        options.prompt.toLowerCase().includes('radar') || 
+        options.systemPrompt?.toLowerCase().includes('radar') || 
+        options.prompt.toLowerCase().includes('announces: a model release')
+      ) {
+        return JSON.stringify({
+          category: "Model Release",
+          title: "Gemini 2.5 Flash Preview Released",
+          summary: "Google announced the preview of Gemini 2.5 Flash with enhanced low-latency coding capabilities.",
+          impact: "Reduces API costs and increases throughput for developer tooling.",
+          affectedUsers: "Developers, Tech Leads",
+          recommendedAction: "Test the preview model in staging environments.",
+          importanceScore: 88
+        });
+      }
+
+      // 2. Daily Brew / briefing query detection
+      if (
+        options.prompt.toLowerCase().includes('briefing') || 
+        options.prompt.toLowerCase().includes('brew') || 
+        options.prompt.toLowerCase().includes('roast') || 
+        options.prompt.toLowerCase().includes('blend')
+      ) {
+        return JSON.stringify({
+          headline: "Fast-Paced Innovation in LLMs and Infrastructure",
+          keyDevelopments: [
+            "Open-source releases continue to match proprietary capabilities.",
+            "Local emulation technologies receive significant performance optimizations."
+          ],
+          whatChanged: "Emulators and local runtime engines are incorporating advanced performance hot-fixes on-the-fly, transforming how legacy codebases are virtualized.",
+          whyItMatters: "Allows legacy enterprises to maintain compatibility while scaling up server performance without immediate rewrite costs.",
+          recommendedActions: [
+            "Assess virtualization overhead in cloud workloads.",
+            "Integrate low-latency runtime optimizations."
+          ],
+          priorityLevel: "HIGH"
+        });
+      }
+
+      // 3. Default Content Enrichment JSON
+      return JSON.stringify({
+        aiSummary: "The engineering team discovered performance bottlenecks in emulation runtime and resolved them through immediate localized updates.",
+        keyTakeaways: [
+          "Micro-optimizations in emulators yield substantial overall speedups.",
+          "Factual analysis of compiler outputs guides optimization paths.",
+          "Code virtualization benefits from runtime code patching."
+        ],
+        impactAnalysis: "Reduces execution latency for virtualized instructions on cloud hardware.",
+        audiences: ["Engineer", "Founder", "PM"],
+        importanceScore: 78,
+        sentiment: "POSITIVE",
+        trendDirection: "RISING"
+      });
+    }
+
     return `### What Changed
 - **FilterCoffee AI Local Simulation Activated**: All service dependencies (AI, Vector DB, Payments, Caching, and Mail) have been successfully redirected to offline mock handlers.
 - **SQLite Database Integration Enabled**: Local relational schema sync is now executing via file-based SQLite database.

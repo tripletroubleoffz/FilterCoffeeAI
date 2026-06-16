@@ -5,6 +5,7 @@ import { billingRouter } from './billing';
 import { adminRouter } from './admin';
 import { contactRouter } from './contact';
 import { userRouter } from './user';
+import { contentRouter } from './content';
 
 export const appRouter = router({
   signals: signalsRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   admin: adminRouter,
   contact: contactRouter,
   user: userRouter,
+  content: contentRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -52,8 +52,10 @@ export class GeminiService implements IAIService {
   }
 
   async generateText(options: { systemPrompt?: string; prompt: string; temperature?: number }): Promise<string> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`;
+    console.log(`[GeminiService] Fetching URL: ${url.replace(this.apiKey, 'API_KEY')}`);
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+      url,
       {
         method: 'POST',
         headers: {

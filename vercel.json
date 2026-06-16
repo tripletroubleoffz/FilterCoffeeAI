@@ -5,7 +5,19 @@
   "regions": ["sin1"],
   "crons": [
     {
-      "path": "/api/cron/ingest",
+      "path": "/api/cron/ingest?schedule=15min",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/ingest?schedule=30min",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/ingest?schedule=hourly",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/ingest?schedule=daily",
       "schedule": "0 0 * * *"
     }
   ]
